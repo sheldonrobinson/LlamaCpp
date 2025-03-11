@@ -53,6 +53,6 @@ set(llamacpp_bundled_libraries
   $<TARGET_FILE:ggml-cpu>
   $<TARGET_FILE:ggml-base>
   $<TARGET_FILE:ggml>
-  $<TARGET_FILE:vulkan>
+#  $<TARGET_FILE:vulkan>
   PARENT_SCOPE
 )
