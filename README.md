@@ -1,9 +1,9 @@
 # LlamaCpp
 
-[![Build Android](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-android.yml/badge.svg)](https://github.com/Mobile-Artificial-Intelligence/lcpp/actions/workflows/build-android.yml)
-[![Build Linux](https://github.com/Mobile-Artificial-Intelligence/lcpp/actions/workflows/build-linux.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-linux.yml)
-[![Build MacOS](https://github.com/Mobile-Artificial-Intelligence/lcpp/actions/workflows/build-macos.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-macos.yml)
-[![Build Windows](https://github.com/Mobile-Artificial-Intelligence/lcpp/actions/workflows/build-windows.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-windows.yml)
+[![Build Android](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-android.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-android.yml)
+[![Build Linux](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-linux.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-linux.yml)
+[![Build MacOS](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-macos.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-macos.yml)
+[![Build Windows](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-windows.yml/badge.svg)](https://github.com/sheldonrobinson/llamacpp/actions/workflows/build-windows.yml)
 
 LlamaCpp is a dart implementation of llama.cpp. It is a fork/revision of lcpp from mobile artificial intelligence distribution (maid)
 
