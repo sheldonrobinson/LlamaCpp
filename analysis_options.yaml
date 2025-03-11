@@ -1,0 +1,14 @@
+include: package:flutter_lints/flutter.yaml
+
+# Additional information about this file can be found at
+# https://dart.dev/guides/language/analysis-options
+
+# public_member_api_docs is a lint rule that checks whether public members are
+# documented with the dartdoc syntax.
+linter:
+  rules:
+    - public_member_api_docs
+    
+analyzer:
+  exclude:
+    - lib/src/bindings.dart
