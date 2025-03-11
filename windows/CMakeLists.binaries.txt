@@ -1,0 +1,41 @@
+# The Flutter tooling requires that developers have a version of Visual Studio
+# installed that includes CMake 3.14 or later. You should not increase this
+# version, as doing so will cause the plugin to fail to compile for some
+# customers of the plugin.
+cmake_minimum_required(VERSION 3.10)
+
+# Project-level configuration.
+set(PROJECT_NAME "llamacpp")
+project(${PROJECT_NAME} LANGUAGES CXX)
+
+if( CMAKE_GENERATOR_PLATFORM MATCHES "^arm64")
+set(llamacpp_bundled_libraries
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/llama.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/ggml-vulkan.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/ggml-cpu.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/ggml-base.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/ggml.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/vulkan-1.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/msvcp140.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/msvcp140_1.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/msvcp140_2.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/vcruntime140.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/arm64/vcruntime140_1.dll
+  PARENT_SCOPE
+)
+else()
+set(llamacpp_bundled_libraries
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/llama.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/ggml-vulkan.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/ggml-cpu.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/ggml-base.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/ggml.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/vulkan-1.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/msvcp140.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/msvcp140_1.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/msvcp140_2.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/vcruntime140.dll
+  ${CMAKE_CURRENT_SOURCE_DIR}/bin/x64/vcruntime140_1.dll
+  PARENT_SCOPE
+)
+endif()

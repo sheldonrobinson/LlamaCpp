@@ -1,0 +1,9 @@
+[submodule "src/llama_cpp"]
+	path = src/llama_cpp
+	url = https://github.com/ggml-org/llama.cpp.git
+[submodule "src/Vulkan-Loader"]
+	path = src/Vulkan-Loader
+	url = https://github.com/KhronosGroup/Vulkan-Loader.git
+[submodule "src/Vulkan-Headers"]
+	path = src/Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers.git
