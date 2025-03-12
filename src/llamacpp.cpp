@@ -40,15 +40,19 @@ inline void delay(unsigned long ms)
 
 typedef struct common_params common_params_t;
 
+typedef struct cpu_params cpu_params_t;
+
+typedef struct common_params_sampling common_params_sampling_t;
+
 typedef struct common_init_result common_init_result_t;
 
 typedef struct llama_vocab llama_vocab_t;
 
-typedef struct common_chat_msg common_chat_msg_t;
+
 
 typedef struct lcpp_prompt_args {
-	const llama_chat_message* messages;
-  int n_messages;
+	std::vector<common_chat_msg_t> messages = {};
+	int n_messages = 0;
 } lcpp_prompt_args_t;
 
 static std::atomic<bool> _abort{ false };
@@ -85,60 +89,86 @@ typedef struct common_sampler_deleter {
 
 typedef std::unique_ptr<common_sampler_t, common_sampler_deleter_t> common_sampler_ptr;
 
+common_chat_msg_t lcpp_common_chat_msg_to_common_chat_msg(lcpp_common_chat_msg_t* msg) {
+	common_chat_msg_t message;
+	if (msg->role != nullptr) {
+		message.role = std::string(msg->role);
+	}
+	if (msg->content != nullptr) {
+		message.content = std::string(msg->content);
+	}
+	if (msg->tool_name != nullptr) {
+		message.tool_name = std::string(msg->tool_name);
+	}
+	if (msg->tool_call_id != nullptr) {
+		message.tool_call_id = std::string(msg->tool_call_id);
+	}
+	if (msg->reasoning_content != nullptr) {
+		message.reasoning_content = std::string(msg->reasoning_content);
+	}
+	if (msg->n_tool_calls > 0) {
+		for (auto it = msg->tool_calls; it != nullptr; it++) {
+			auto result = *it;
+			common_chat_tool_call toolcall;
+			if (result->arguments != nullptr) {
+				toolcall.arguments = std::string(result->arguments);
+			}
+			if (result->id != nullptr) {
+				toolcall.id = std::string(result->id);
+			}
+			if (result->name != nullptr) {
+				toolcall.name = std::string(result->name);
+			}
+			message.tool_calls.push_back(toolcall);
+		}
+	}
+	if (msg->n_content_parts > 0) {
+		for (auto it = msg->content_parts; it != nullptr; it++) {
+			auto result = *it;
+			common_chat_msg_content_part content;
+			if (result->text != nullptr) {
+				content.text = std::string(result->text);
+			}
+			if (result->type != nullptr) {
+				content.type = std::string(result->type);
+			}
+			message.content_parts.push_back(content);
+		}
+	}
+
+    return message;
+}
+
 void lcpp_common_chat_msg_free(lcpp_common_chat_msg_t* msg) {
 	if (msg) {
-		if (msg->content != nullptr) {
-			free(msg->content);
-		}
+		free(msg->content);
 
-		if (msg->role != nullptr) {
-			free(msg->role);
-		}
+		free(msg->role);
 
 		if (msg->n_content_parts > 0) {
-			if (msg->content_parts != nullptr) {
-				for (int i = 0; i < msg->n_content_parts; i++) {
-					if (msg->content_parts[i]->text != nullptr) {
-						free(msg->content_parts[i]->text);
-					}
-					if (msg->content_parts[i]->type != nullptr) {
-						free(msg->content_parts[i]->type);
-					}
-
-				}
+			for (auto it = msg->content_parts; it != nullptr; it++) {
+				auto part = *it;
+				free(part->text);
+				free(part->type);
 			}
-			
+
 		}
 
 		if (msg->n_tool_calls > 0) {
-			if (msg->tool_calls != nullptr) {
-				for (int i = 0; i < msg->n_tool_calls; i++) {
-					if (msg->tool_calls[i]->arguments != nullptr) {
-						free(msg->tool_calls[i]->arguments);
-					}
-					if (msg->tool_calls[i]->name != nullptr) {
-						free(msg->tool_calls[i]->name);
-					}
-					if (msg->tool_calls[i]->id != nullptr) {
-						free(msg->tool_calls[i]->id);
-					}
+			for (auto it = msg->tool_calls; it != nullptr; it++) {
+				auto tool = *it;
 
-				}
+				free(tool->arguments);
+				free(tool->name);
+				free(tool->id);
 			}
 
 		}
 
-		if (msg->reasoning_content != nullptr) {
-			free(msg->reasoning_content);
-		}
+		free(msg->reasoning_content);
 
-		if (msg->tool_name != nullptr) {
-			free(msg->tool_name);
-		}
-
-		if (msg->tool_call_id) {
-			free(msg->tool_call_id);
-		}
+		free(msg->tool_name);
+		free(msg->tool_call_id);
 		delete msg;
 	}
 }
@@ -342,7 +372,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	lcpp_common_chat_msg_t _msg;
 	_msg.n_role = msg.role.length();
 	if (_msg.n_role > 0) {
-		_msg.role = (char*) std::calloc(_msg.n_role+1, sizeof(char));
+		_msg.role = (char*)std::calloc(_msg.n_role + 1, sizeof(char));
 		std::memcpy(_msg.role, msg.role.c_str(), _msg.n_role);
 	}
 	else {
@@ -384,7 +414,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	else {
 		_msg.tool_call_id = nullptr;
 	}
-	
+
 	if (!msg.content_parts.empty()) {
 		std::vector<lcpp_common_chat_msg_content_part_t*> parts(msg.content_parts.size());
 		for (auto it = msg.content_parts.cbegin(); it != msg.content_parts.cend(); it++) {
@@ -392,7 +422,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 			lcpp_common_chat_msg_content_part_t part;
 			part.n_text = contents.text.size();
 			if (part.n_text > 0) {
-				part.text = (char*) std::calloc(part.n_text + 1, sizeof(char));
+				part.text = (char*)std::calloc(part.n_text + 1, sizeof(char));
 				std::memcpy(part.text, contents.text.c_str(), part.n_text);
 			}
 			else {
@@ -433,7 +463,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 
 			toolcall.n_id = tool_call.id.size();
 			if (toolcall.n_id > 0) {
-				toolcall.id = (char*) std::calloc(toolcall.n_id + 1, sizeof(char));
+				toolcall.id = (char*)std::calloc(toolcall.n_id + 1, sizeof(char));
 				std::memcpy(toolcall.id, tool_call.id.c_str(), toolcall.n_id);
 			}
 			else {
@@ -462,24 +492,15 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 }
 
 int _prompt(void* args) {
-  lcpp_prompt_args_t* prompt_args = (lcpp_prompt_args_t*)args;
-  int n_messages = prompt_args->n_messages;
-  const llama_chat_message* messages = prompt_args->messages;
-	std::vector<common_chat_msg_t> chat_msgs(n_messages);
-
-	common_chat_msg_t usr_prompt;
-
-	if (n_messages > 0) {
-		for (int i = 0; i < n_messages -1; i++) {
-			common_chat_msg_t msg;
-			msg.role = messages[i].role;
-			msg.content = messages[i].content;
-			chat_msgs.push_back(msg);
-		}
-
-		usr_prompt.role = messages[n_messages - 1].role;
-		usr_prompt.content = messages[n_messages - 1].content;
+	lcpp_prompt_args_t* prompt_args = (lcpp_prompt_args_t*)args;
+	int n_messages = prompt_args->n_messages;
+	if (!prompt_args->n_messages > 0) {
+		return GGML_EXIT_ABORTED;
 	}
+	std::vector<common_chat_msg_t> chat_msgs(prompt_args->messages);
+
+	common_chat_msg_t usr_prompt = chat_msgs.back();
+	chat_msgs.pop_back();
 
 	// helper function to evaluate a prompt and generate a response
 	auto generate = [&](const std::string& prompt) {
@@ -495,7 +516,9 @@ int _prompt(void* args) {
 		const int n_prompt_tokens = -llama_tokenize(_vocab, prompt.c_str(), prompt.size(), NULL, 0, is_first, true);
 		std::vector<llama_token> prompt_tokens(n_prompt_tokens);
 		if (llama_tokenize(_vocab, prompt.c_str(), prompt.size(), prompt_tokens.data(), prompt_tokens.size(), is_first, true) < 0) {
-			GGML_ABORT("failed to tokenize the prompt\n");
+			// GGML_ABORT("failed to tokenize the prompt\n");
+			fprintf(stderr, "failed to tokenize the prompt\n");
+			return GGML_EXIT_ABORTED;
 		}
 
 		// prepare a batch for the prompt
@@ -507,11 +530,13 @@ int _prompt(void* args) {
 			int n_ctx_used = llama_get_kv_cache_used_cells(ctx);
 			if (n_ctx_used + batch.n_tokens > n_ctx) {
 				fprintf(stderr, "context size exceeded\n");
-				exit(0);
+				return GGML_EXIT_ABORTED;
 			}
 
 			if (llama_decode(ctx, batch)) {
-				GGML_ABORT("failed to decode\n");
+				// GGML_ABORT("failed to decode\n");
+				fprintf(stderr, "failed to decode\n");
+				return GGML_EXIT_ABORTED;
 			}
 
 			// sample the next token
@@ -526,7 +551,9 @@ int _prompt(void* args) {
 			char buf[256];
 			int n = llama_token_to_piece(_vocab, new_token_id, buf, sizeof(buf), 0, true);
 			if (n < 0) {
-				GGML_ABORT("failed to convert token to piece\n");
+				// GGML_ABORT("failed to convert token to piece\n");
+				fprintf(stderr, "failed to convert token to piece\n");
+				return GGML_EXIT_ABORTED;
 			}
 			std::string piece(buf, n);
 			if (TokenStreamCallback != nullptr) {
@@ -544,91 +571,109 @@ int _prompt(void* args) {
 			ChatMessageCallback(*_response.get());
 		}
 
-		return EXIT_SUCCESS;
+		return GGML_EXIT_SUCCESS;
 	};
 
 
-	auto chat_add_and_format = [&chat_msgs](const std::string& role, const std::string& content) {
-		common_chat_msg new_msg;
-		new_msg.role = role;
-		new_msg.content = content;
-		auto formatted = common_chat_format_single(_chat_templates.get(), chat_msgs, new_msg, role == "user", _use_jinja.load());
-		chat_msgs.push_back(new_msg);
+	auto chat_add_and_format = [&chat_msgs](common_chat_msg_t prompt) {
+		auto formatted = common_chat_format_single(_chat_templates.get(), chat_msgs, prompt, prompt.role == "user", _use_jinja.load());
+		chat_msgs.push_back(prompt);
 		return formatted;
 	};
 
 	if (chat_msgs.empty()) {
 		// format the system prompt in conversation mode (will use template default if empty)
 		if (!_system_prompt.empty()) {
-			chat_add_and_format("system", _system_prompt);
+			common_chat_msg systemmsg;
+			systemmsg.role = "system";
+			systemmsg.content = _system_prompt;
+			chat_add_and_format(systemmsg);
 		}
 	}
 
-	std::string prompt = chat_add_and_format(usr_prompt.role, usr_prompt.content);
+	std::string prompt = chat_add_and_format(usr_prompt);
 
-	generate(prompt);
+	int res = generate(prompt);
 
-	return EXIT_SUCCESS;
+	return res;
 }
 
-int lcpp_prompt(const llama_chat_message* messages, int n_messages){
+int lcpp_prompt(lcpp_common_chat_msg_t** messages, int n_messages) {
 	lcpp_prompt_args_t args;
-	args.messages = messages;
+	args.messages = std::vector<common_chat_msg_t>(n_messages);
 	args.n_messages = n_messages;
+	for (auto it = messages; it != nullptr; it++) {
+		auto msg = *it;
+		auto rhs = std::make_unique<lcpp_common_chat_msg_ptr>(msg);
+		auto message = lcpp_common_chat_msg_to_common_chat_msg(rhs->get());
+		args.messages.push_back(message);
+	}
+
 	thrd_t* thr = NULL;
 	thrd_create(thr, _prompt, &args);
-  int result = EXIT_SUCCESS;
-	thrd_join(*thr,&result);
-  return result;
+	int result = EXIT_SUCCESS;
+	thrd_join(*thr, &result);
+	return result;
 }
 
 static common_params_t _lcpp_params_to_common_params(const llama_model_params_t* model_params, const llama_context_params_t* context_params, const lcpp_params_t* lcpp_params) {
 	GGML_ASSERT(lcpp_params->model_path != nullptr);
 	common_params_t _c;
-	_c.sampling.dry_allowed_length = lcpp_params->dry_allowed_length;
-	_c.sampling.dry_base = lcpp_params->dry_base;
-	_c.sampling.dry_multiplier = lcpp_params->dry_multiplier;
-	_c.sampling.dry_penalty_last_n = lcpp_params->dry_penalty_last_n;
+
+	common_params_sampling_t _sampling;
+
+	_sampling.dry_allowed_length = lcpp_params->dry_allowed_length;
+	_sampling.dry_base = lcpp_params->dry_base;
+	_sampling.dry_multiplier = lcpp_params->dry_multiplier;
+	_sampling.dry_penalty_last_n = lcpp_params->dry_penalty_last_n;
+	_sampling.dry_allowed_length = lcpp_params->dry_allowed_length;
+
 	int n_dry_sequence_breakers = lcpp_params->n_dry_sequence_breakers;
-	_c.sampling.dry_sequence_breakers = std::vector<std::string>(n_dry_sequence_breakers);
-	for (int i = 0; i < n_dry_sequence_breakers; i++) {
-		std::string _value(lcpp_params->dry_sequence_breakers[i]);
-		_c.sampling.dry_sequence_breakers.push_back(_value);
-	}
-	_c.sampling.dynatemp_exponent = lcpp_params->dynatemp_exponent;
-	_c.sampling.dynatemp_range = lcpp_params->dynatemp_range;
+	//_c.sampling.dry_sequence_breakers = std::vector<std::string>(n_dry_sequence_breakers);
+//	for (auto it = lcpp_params->dry_sequence_breakers; it != nullptr; it++) {
+//	    auto breaker = *it;
+//		std::string _value(breaker);
+//		_sampling.dry_sequence_breakers.push_back(_value);
+//		free((void*)*it);
+//	}
+	_sampling.dynatemp_exponent = lcpp_params->dynatemp_exponent;
+	_sampling.dynatemp_range = lcpp_params->dynatemp_range;
 	if (lcpp_params->n_grammar_length > 0) {
-		_c.sampling.grammar = std::string(lcpp_params->grammar);
+		_sampling.grammar = std::string(lcpp_params->grammar);
 	}
-	_c.sampling.grammar_lazy = lcpp_params->grammar_lazy;
-	_c.sampling.ignore_eos = lcpp_params->ignore_eos;
-	_c.sampling.min_keep = lcpp_params->min_keep;
-	_c.sampling.min_p = lcpp_params->min_p;
-	_c.sampling.mirostat = lcpp_params->mirostat;
-	_c.sampling.mirostat_eta = lcpp_params->mirostat_eta;
-	_c.sampling.mirostat_tau = lcpp_params->mirostat_tau;
-	_c.sampling.no_perf = lcpp_params->no_perf;
-	_c.sampling.n_prev = lcpp_params->n_prev;
-	_c.sampling.n_probs = lcpp_params->n_probs;
-	_c.sampling.penalty_freq = lcpp_params->penalty_freq;
-	_c.sampling.penalty_last_n = lcpp_params->penalty_last_n;
-	_c.sampling.penalty_present = lcpp_params->penalty_present;
-	_c.sampling.penalty_repeat = lcpp_params->penalty_repeat;
-	int n_samplers = lcpp_params->n_samplers;
-	_c.sampling.samplers = std::vector<common_sampler_type>(n_samplers);
-	for (int i = 0; i < n_samplers; i++) {
-		common_sampler_type _type = (common_sampler_type)lcpp_params->samplers[i];
-		_c.sampling.samplers.push_back(_type);
-	}
-	_c.sampling.seed = lcpp_params->seed;
-	_c.sampling.temp = lcpp_params->temp;
-	_c.sampling.timing_per_token = lcpp_params->timing_per_token;
-	_c.sampling.top_k = lcpp_params->top_k;
-	_c.sampling.top_n_sigma = lcpp_params->top_n_sigma;
-	_c.sampling.top_p = lcpp_params->top_p;
-	_c.sampling.typ_p = lcpp_params->typ_p;
-	_c.sampling.xtc_probability = lcpp_params->xtc_probability;
-	_c.sampling.xtc_threshold = lcpp_params->xtc_threshold;
+	_sampling.grammar_lazy = lcpp_params->grammar_lazy;
+	_sampling.ignore_eos = lcpp_params->ignore_eos;
+	_sampling.min_keep = lcpp_params->min_keep;
+	_sampling.min_p = lcpp_params->min_p;
+	_sampling.mirostat = lcpp_params->mirostat;
+	_sampling.mirostat_eta = lcpp_params->mirostat_eta;
+	_sampling.mirostat_tau = lcpp_params->mirostat_tau;
+	_sampling.no_perf = lcpp_params->no_perf;
+	_sampling.n_prev = lcpp_params->n_prev;
+	_sampling.n_probs = lcpp_params->n_probs;
+	_sampling.penalty_freq = lcpp_params->penalty_freq;
+	_sampling.penalty_last_n = lcpp_params->penalty_last_n;
+	_sampling.penalty_present = lcpp_params->penalty_present;
+	_sampling.penalty_repeat = lcpp_params->penalty_repeat;
+	//int n_samplers = lcpp_params->n_samplers;
+	//_c.sampling.samplers = std::vector<common_sampler_type>(n_samplers);
+	//for (int i = 0; i < n_samplers; i++) {
+	//	common_sampler_type _type = (common_sampler_type)lcpp_params->samplers[i];
+	//	_c.sampling.samplers.push_back(_type);
+	//}
+	_sampling.seed = lcpp_params->seed;
+	_sampling.temp = lcpp_params->temp;
+	_sampling.timing_per_token = lcpp_params->timing_per_token;
+	_sampling.top_k = lcpp_params->top_k;
+	_sampling.top_n_sigma = lcpp_params->top_n_sigma;
+	_sampling.top_p = lcpp_params->top_p;
+	_sampling.typ_p = lcpp_params->typ_p;
+	_sampling.xtc_probability = lcpp_params->xtc_probability;
+	_sampling.xtc_threshold = lcpp_params->xtc_threshold;
+
+	_c.sampling = _sampling;
+
+	_c.numa = GGML_NUMA_STRATEGY_DISTRIBUTE;	
 
 	_c.model = std::string(lcpp_params->model_path);
 	lcpp_model_family_t _family = lcpp_params->model_family;
@@ -705,7 +750,20 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
 
 	llama_backend_init();
 	auto params = _lcpp_params_to_common_params(&model_params, &context_params, &lcpp_params);
-	llama_numa_init(params.numa);
+
+	if (ggml_is_numa()) {
+		llama_numa_init(params.numa);
+	}
+	else {
+		llama_numa_init(GGML_NUMA_STRATEGY_DISABLED);
+	}
+
+	cpu_params_t _cpu;
+
+	postprocess_cpu_params(_cpu, nullptr);
+
+	params.cpuparams = _cpu;
+	
 	_result = common_init_result_ptr(&common_init_from_params(params));
 
 	auto model = _result->model.get();
@@ -721,7 +779,7 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
 	auto ctx = _result->context.get();
 
 	ctx->abort_callback = _ggml_abort_callback;
-	
+
 	_set_use_jinja_by_model_family(lcpp_params.model_family);
 
 	_set_common_format_by_model_family(lcpp_params.model_family);
@@ -793,6 +851,6 @@ void lcpp_destroy() {
 
 }
 
-void lcpp_reset(){
+void lcpp_reset() {
 	llama_kv_cache_clear(_result.get()->context.get());
 }

@@ -7209,9 +7209,11 @@ external void llama_perf_sampler_reset(
   ffi.Pointer<llama_sampler> chain,
 );
 
-@ffi.Native<ffi.Int Function(ffi.Pointer<llama_chat_message>, ffi.Int)>()
+@ffi.Native<
+    ffi.Int Function(
+        ffi.Pointer<ffi.Pointer<lcpp_common_chat_msg_t>>, ffi.Int)>()
 external int lcpp_prompt(
-  ffi.Pointer<llama_chat_message> messages,
+  ffi.Pointer<ffi.Pointer<lcpp_common_chat_msg_t>> messages,
   int n_messages,
 );
 

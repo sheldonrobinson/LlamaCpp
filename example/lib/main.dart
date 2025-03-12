@@ -19,7 +19,7 @@ class LlamaApp extends StatefulWidget {
 
 class LlamaAppState extends State<LlamaApp> {
   final TextEditingController controller = TextEditingController();
-  final List<ChatMessage> messages = [];
+  // final List<ChatMessage> messages = [];
   LlamaCpp? model;
   String? modelPath;
   bool busy = false;
@@ -62,19 +62,23 @@ class LlamaAppState extends State<LlamaApp> {
 
     setState(() {
       busy = true;
-      messages.add(UserChatMessage(value));
+      // messages.add(UserChatMessage(value));
       controller.clear();
     });
 
-    final stream = model!.prompt(messages.copy());
+    // final stream = model!.prompt(messages.copy());
 
-    messages.add(AssistantChatMessage(''));
+    // final StreamController<ChatMessage> sc = StreamController();
 
-    await for (var response in stream) {
-      setState(() {
-        messages.last.content += response.finishReason != FinishReason.stop ? response.output : '';
-      });
-    }
+    // final stream = sc.stream();
+
+    // messages.add(AssistantChatMessage(''));
+
+    // await for (var response in stream) {
+    //   setState(() {
+    //     messages.last.content += response.finishReason != FinishReason.stop ? response.output : '';
+    //   });
+    // }
 
     setState(() => busy = false);
   }
@@ -110,12 +114,12 @@ class LlamaAppState extends State<LlamaApp> {
       children: [
         Expanded(
           child: ListView.builder(
-            itemCount: messages.length,
+            itemCount: 0, // messages.length,
             itemBuilder: (context, index) {
-              final message = messages[index];
+              // final message = messages[index];
               return ListTile(
-                title: Text(message.role),
-                subtitle: Text(message.content),
+                title: Text("message.role"),
+                subtitle: Text("message.content"),
               );
             },
           ),

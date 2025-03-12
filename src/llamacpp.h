@@ -9,6 +9,7 @@
 	#endif // WIN32
 	#include <cstdint>
 	#include <cstdbool>
+	
 #else // __cplusplus - Objective-C or other C platform
 	#define FFI_PLUGIN_EXPORT extern
 	#include <stdint.h>
@@ -21,7 +22,7 @@
 extern "C" {
 #endif
 
-
+	typedef struct common_chat_msg common_chat_msg_t;
 
 	typedef struct lcpp_data_pvalue {
 		char* value;
@@ -158,7 +159,7 @@ extern "C" {
 }
 #endif
 
-FFI_PLUGIN_EXPORT int lcpp_prompt(const llama_chat_message* messages, int n_messages);
+FFI_PLUGIN_EXPORT int lcpp_prompt(lcpp_common_chat_msg_t** messages, int n_messages);
 
 FFI_PLUGIN_EXPORT lcpp_params_t lcpp_sampling_params_defaults();
 

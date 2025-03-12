@@ -1,5 +1,127 @@
 part of 'package:llamacpp/llamacpp.dart';
 
+
+
+ffi.Pointer<ffi.Pointer<lcpp_common_chat_msg_t>> _to_lcpp_common_chat_msg_t(List<cm.ChatMessage> messages) {
+  final msgs = ffi.calloc<ffi.Pointer<lcpp_common_chat_msg_t>>(messages.length+1);
+  messages.asMap().forEach((idx,msg){
+    switch(msg.runtimeType){
+      case cm.HumanChatMessage():
+        final message = msg as cm.HumanChatMessage;
+        msgs[idx].ref.role = "user".toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_role = "user".length;
+        final cm.ChatMessageContent content = message.content;
+        switch (content) {
+          case ChatMessageContentText():
+            msgs[idx].ref.content = content.text.toNativeUtf8().cast<ffi.Char>();
+            msgs[idx].ref.n_content = content.text.length;
+            break;
+          case ChatMessageContentImage():
+            msgs[idx].ref.content_parts = ffi.calloc<ffi.Pointer<lcpp_common_chat_msg_content_part_t>>(2);
+            if(content.mimeType!=null){
+              msgs[idx].ref.content_parts[0].ref.type = content.mimeType!.toNativeUtf8().cast<ffi.Char>();
+              msgs[idx].ref.content_parts[0].ref.n_type = content.mimeType!.length;
+            }
+            msgs[idx].ref.content_parts[0].ref.text = content.data.toNativeUtf8().cast<ffi.Char>();
+            msgs[idx].ref.content_parts[0].ref.n_text = content.data.length;
+            msgs[idx].ref.content_parts[1] = ffi.nullptr;
+          case ChatMessageContentMultiModal():
+            if(content.parts.isNotEmpty) {
+              msgs[idx].ref.content_parts = ffi.calloc<
+                  ffi.Pointer<lcpp_common_chat_msg_content_part_t>>(
+                  content.parts.length + 1);
+              content.parts.asMap().forEach((inx, part) {
+                switch (part.runtimeType) {
+                  case ChatMessageContentText():
+                    final text = part as ChatMessageContentText;
+                    msgs[idx].ref.content_parts[inx].ref.text =
+                        text.text.toNativeUtf8().cast<ffi.Char>();
+                    msgs[idx].ref.content_parts[inx].ref.n_text =
+                        text.text.length;
+                    break;
+                  case ChatMessageContentImage():
+                    final image = part as ChatMessageContentImage;
+                    if (image.mimeType != null) {
+                      msgs[idx].ref.content_parts[inx].ref.type =
+                          image.mimeType!.toNativeUtf8().cast<ffi.Char>();
+                      msgs[idx].ref.content_parts[inx].ref.n_type =
+                          image.mimeType!.length;
+                    }
+                    msgs[idx].ref.content_parts[inx].ref.text =
+                        image.data.toNativeUtf8().cast<ffi.Char>();
+                    msgs[idx].ref.content_parts[inx].ref.n_text =
+                        image.data.length;
+                    break;
+
+                  case ChatMessageContentMultiModal():
+                    msgs[idx].ref.content_parts[inx].ref.text =
+                        "".toNativeUtf8().cast<ffi.Char>();
+                    msgs[idx].ref.content_parts[inx].ref.n_text = "".length;
+                    break;
+                }
+              });
+              msgs[idx].ref.content_parts[content.parts.length] = ffi.nullptr;
+            }
+            break;
+        }
+        break;
+      case cm.AIChatMessage():
+        final message = msg as cm.AIChatMessage;
+        msgs[idx].ref.role = "assistant".toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_role = "assistant".length;
+        msgs[idx].ref.content = message.content.toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_content = message.content.length;
+        if(message.toolCalls.isNotEmpty){
+          msgs[idx].ref.tool_calls = ffi.calloc<ffi.Pointer<lcpp_common_chat_tool_call>>(message.toolCalls.length+1);
+          message.toolCalls.asMap().forEach((inx, part) {
+            msgs[idx].ref.tool_calls[inx].ref.name = part.name.toNativeUtf8().cast<ffi.Char>();
+            msgs[idx].ref.tool_calls[inx].ref.n_name = part.name.length;
+            String json = JsonEncoder().convert(part.arguments);
+            msgs[idx].ref.tool_calls[inx].ref.arguments = json.toNativeUtf8().cast<ffi.Char>();
+            msgs[idx].ref.tool_calls[inx].ref.n_arguments = json.length;
+            msgs[idx].ref.tool_calls[inx].ref.id = part.id.toNativeUtf8().cast<ffi.Char>();
+            msgs[idx].ref.tool_calls[inx].ref.n_id = part.id.length;
+
+          });
+          msgs[idx].ref.tool_calls[message.toolCalls.length] = ffi.nullptr;
+        }
+        break;
+      case cm.ToolChatMessage():
+        msgs[idx].ref.role = "tool".toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_role = "tool".length;
+        final message = msg as cm.ToolChatMessage;
+        msgs[idx].ref.tool_call_id = message.toolCallId.toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_tool_call_id = message.toolCallId.length;
+        msgs[idx].ref.content = message.content.toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_content = message.content.length;
+        break;
+      case cm.SystemChatMessage():
+        msgs[idx].ref.role = "system".toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_role = "system".length;
+        final message = msg as cm.SystemChatMessage;
+        msgs[idx].ref.content = message.content.toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_content = message.content.length;
+        break;
+      case cm.CustomChatMessage():
+        final message = msg as cm.CustomChatMessage;
+        msgs[idx].ref.role = message.role.toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_role = message.role.length;
+        msgs[idx].ref.content = message.content.toNativeUtf8().cast<ffi.Char>();
+        msgs[idx].ref.n_content = message.content.length;
+        break;
+    }
+  });
+  msgs[messages.length] = ffi.nullptr;
+  return msgs;
+}
+
+extension LLamaCppChatMessages on PromptValue {
+  ffi.Pointer<ffi.Pointer<lcpp_common_chat_msg_t>> toNative() {
+    final messages = toChatMessages();
+    return _to_lcpp_common_chat_msg_t(messages);
+  }
+}
+
 /// A class that implements the Llama interface and provides functionality
 /// for loading and interacting with a Llama model, context, and sampler.
 ///
@@ -108,13 +230,14 @@ class LlamaCpp  with ChangeNotifier {
     lcpp_reconfigure(model_params, context_params, lcpp_params);
   }
 
-  Stream<LLMResult> prompt(List<ChatMessage> messages, {bool streaming = true}) async* {
+  Stream<LLMResult> prompt(PromptValue messages, {bool streaming = true}) async* {
     if (kDebugMode) {
       print('LlamaNative::prompt($messages)');
     }
-    final messagesCopy = messages.copy();
+    
+    
 
-    ffi.Pointer<llama_chat_message> messagesPtr = messagesCopy.toNative();
+    // ffi.Pointer<llama_chat_message> messagesPtr = messagesCopy.toNative();
 
     ffi.NativeCallable<LppTokenStreamCallback_tFunction>? nativeNewTokenCallable;
 
@@ -285,8 +408,8 @@ class LlamaCpp  with ChangeNotifier {
     if(kDebugMode) {
       print('set_chat_message_callback:>');
     }
-
-    lcpp_prompt(messagesPtr, messages.length);
+    final chatMessages = messages.toChatMessages();
+    lcpp_prompt(_to_lcpp_common_chat_msg_t(chatMessages), chatMessages.length);
 
     /// Stream of token responses.
     await for (final response in responseStreamController.stream){
@@ -295,10 +418,8 @@ class LlamaCpp  with ChangeNotifier {
           break;
     }
 
-    messagesPtr.free(messagesCopy.length);
-
     if (kDebugMode) {
-      print('LlamaNative::prompt:>');
+      print('LlamaCpp::prompt:>');
     }
   }
 

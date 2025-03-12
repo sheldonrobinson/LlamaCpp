@@ -168,8 +168,8 @@ class LlamaCppParams {
         dryAllowedLength: map['dry_allowed_length'] ?? 2,
         dryPenaltyLastN: map['dry_penalty_last_n'] ?? -1,
         drySequenceBreakers:
-            map['dry_sequence_breakers'] ?? const ["\n", ":", "\"", "*"],
-        samplers: map['samplers'] ?? const [10, 1, 2, 5, 3, 4, 8, 7],
+            map['dry_sequence_breakers'],
+        samplers: map['samplers'],
         model_path: map['model_path'],
       );
 
@@ -303,20 +303,39 @@ class LlamaCppParams {
     }
 
     if (drySequenceBreakers != null) {
-      lcppParams.dry_sequence_breakers =
-          ffi.calloc<ffi.Pointer<ffi.Char>>(drySequenceBreakers!.length);
-      for (var i = 0; i < drySequenceBreakers!.length; i++) {
-        lcppParams.dry_sequence_breakers[i] =
-            drySequenceBreakers![i].toNativeUtf8().cast<ffi.Char>();
+      if (kDebugMode) {
+        print('drySequenceBreakers != null, n=${drySequenceBreakers!.length}');
       }
+
+      // List<ffi.Pointer<ffi.Char>> _breakers = map((str)=>str.toNativeUtf8().cast<ffi.Char>()).toList(growable: false);
+
+      lcppParams.dry_sequence_breakers = ffi.calloc
+          .allocate<ffi.Pointer<ffi.Char>>(drySequenceBreakers!.length + 1);
+
+      drySequenceBreakers!.asMap().forEach((idx, str) {
+        if (kDebugMode) {
+          print('drySequenceBreakers adding, str=${str}');
+        }
+        lcppParams.dry_sequence_breakers[idx] =
+            str.toNativeUtf8().cast<ffi.Char>();
+      });
+      if (kDebugMode) {
+        print('drySequenceBreakers added n=${drySequenceBreakers!.length}');
+      }
+      lcppParams.dry_sequence_breakers[drySequenceBreakers!.length] =
+          ffi.nullptr;
       lcppParams.n_dry_sequence_breakers = drySequenceBreakers!.length;
+      if (kDebugMode) {
+        print('drySequenceBreakers added, nullptr terminator');
+      }
     }
 
     if (samplers != null) {
       lcppParams.samplers = ffi.calloc<ffi.Uint8>(samplers!.length);
-      for (var i = 0; i < samplers!.length; i++) {
-        lcppParams.samplers[i] = samplers![i];
-      }
+
+      samplers!.asMap().forEach((idx, str) {
+        lcppParams.samplers[idx] = samplers![idx].toUnsigned(8);
+      });
       lcppParams.n_samplers = samplers!.length;
     }
 
@@ -345,7 +364,6 @@ class LlamaCppParams {
       } else {
         lcpp_model_family.LCPP_MODEL_FAMILY_UNSPECIFIED.value;
       }
-
     }
 
     return lcppParams;
