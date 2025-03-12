@@ -47,6 +47,17 @@ stream.listen((event) {
 });
 ```
 
+## Obtaining source
+
+```bash
+git clone --recursive https://github.com/sheldonrobinson/LlamaCpp.git
+
+# Ubuntu build dependencies
+sudo apt -y install libomp-18-dev libvulkan-dev vulkan-tools glslc rustup ninja-build
+
+rustup toolchain install stable
+```
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details

@@ -8,11 +8,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# if(GGML_VULKAN)
- # add_subdirectory("${LLAMACPP_SRC_DIR}/Vulkan-Headers" "${CMAKE_CURRENT_BINARY_DIR}/vkheaders" SYSTEM)
- # add_subdirectory("${LLAMACPP_SRC_DIR}/Vulkan-Loader" "${CMAKE_CURRENT_BINARY_DIR}/vkloaders" SYSTEM)
-# endif()
-
 if(GGML_VULKAN)
   add_subdirectory(Vulkan-Headers "${CMAKE_CURRENT_BINARY_DIR}/vkheaders" EXCLUDE_FROM_ALL)
   add_subdirectory(Vulkan-Loader "${CMAKE_CURRENT_BINARY_DIR}/vkloaders" EXCLUDE_FROM_ALL)

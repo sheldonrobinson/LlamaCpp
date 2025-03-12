@@ -26,7 +26,7 @@ if (NOT MSVC)
 	set(GGML_F16C  ON CACHE BOOL "ggml: enable F16C" FORCE)
 endif()
 set(GGML_OPENMP ON CACHE BOOL "ggml: use OpenMP" FORCE)
-# set(GGML_STATIC ON CACHE BOOL "ggml: static link libraries" FORCE)
+
 
 add_subdirectory("${LLAMACPP_SRC_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/shared")
 
@@ -34,17 +34,9 @@ set_target_properties(llamacpp PROPERTIES
   BUILD_WITH_INSTALL_RPATH TRUE
 )
 
-# target_sources(
-  # llamacpp 
-  # PRIVATE 
-  # ${LLAMACPP_SRC_DIR}/llamacpp.cpp
-# )
-
-
 
 target_compile_definitions(llamacpp PUBLIC DART_SHARED_LIB)
 
-# target_link_libraries(llamacpp PRIVATE ggml llama common Threads::Threads)
 
 set(llamacpp_bundled_libraries
   $<TARGET_FILE:llamacpp>
@@ -53,6 +45,5 @@ set(llamacpp_bundled_libraries
   $<TARGET_FILE:ggml-cpu>
   $<TARGET_FILE:ggml-base>
   $<TARGET_FILE:ggml>
-#  $<TARGET_FILE:vulkan>
   PARENT_SCOPE
 )

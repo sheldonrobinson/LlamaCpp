@@ -1,9 +1,11 @@
 #include <float.h>
 #include <time.h>
 #include <threads.h>
+#include <string.h>
 #include <queue>
 #include <atomic>
 #include <string>
+
 
 #include "llamacpp.h"
 
@@ -303,7 +305,7 @@ bool _ggml_abort_callback(void* data) {
 void on_new_token(const char* token, int length) {
 	if (length > 0) {
 		char* text = (char*)std::calloc(length + 1, sizeof(char));
-		std::memcpy(text, token, length);
+		memcpy(text, token, length);
 		uint32_t len = (uint32_t)length;
 		TokenStreamCallback(text, &len);
 	}
@@ -372,8 +374,8 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	lcpp_common_chat_msg_t _msg;
 	_msg.n_role = msg.role.length();
 	if (_msg.n_role > 0) {
-		_msg.role = (char*)std::calloc(_msg.n_role + 1, sizeof(char));
-		std::memcpy(_msg.role, msg.role.c_str(), _msg.n_role);
+		_msg.role = (char*) std::calloc(_msg.n_role+1, sizeof(char));
+		memcpy(_msg.role, msg.role.c_str(), _msg.n_role);
 	}
 	else {
 		_msg.role = nullptr;
@@ -382,7 +384,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	_msg.n_content = msg.content.length();
 	if (_msg.n_content > 0) {
 		_msg.content = (char*)std::calloc(_msg.n_content + 1, sizeof(char));
-		std::memcpy(_msg.content, msg.content.c_str(), _msg.n_content);
+		memcpy(_msg.content, msg.content.c_str(), _msg.n_content);
 	}
 	else {
 		_msg.content = nullptr;
@@ -391,7 +393,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	_msg.n_reasoning_content = msg.reasoning_content.length();
 	if (_msg.n_reasoning_content > 0) {
 		_msg.reasoning_content = (char*)std::calloc(_msg.n_reasoning_content + 1, sizeof(char));
-		std::memcpy(_msg.reasoning_content, msg.reasoning_content.c_str(), _msg.n_reasoning_content);
+		memcpy(_msg.reasoning_content, msg.reasoning_content.c_str(), _msg.n_reasoning_content);
 	}
 	else {
 		_msg.reasoning_content = nullptr;
@@ -400,7 +402,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	_msg.n_tool_name = msg.tool_name.length();
 	if (_msg.n_tool_name > 0) {
 		_msg.tool_name = (char*)std::calloc(_msg.n_tool_name + 1, sizeof(char));
-		std::memcpy(_msg.tool_name, msg.tool_name.c_str(), _msg.n_tool_name);
+		memcpy(_msg.tool_name, msg.tool_name.c_str(), _msg.n_tool_name);
 	}
 	else {
 		_msg.tool_name = nullptr;
@@ -409,7 +411,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 	_msg.n_tool_call_id = msg.tool_call_id.length();
 	if (_msg.n_tool_call_id > 0) {
 		_msg.tool_call_id = (char*)std::calloc(_msg.n_tool_call_id + 1, sizeof(char));
-		std::memcpy(_msg.tool_call_id, msg.tool_call_id.c_str(), _msg.n_tool_call_id);
+		memcpy(_msg.tool_call_id, msg.tool_call_id.c_str(), _msg.n_tool_call_id);
 	}
 	else {
 		_msg.tool_call_id = nullptr;
@@ -422,8 +424,8 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 			lcpp_common_chat_msg_content_part_t part;
 			part.n_text = contents.text.size();
 			if (part.n_text > 0) {
-				part.text = (char*)std::calloc(part.n_text + 1, sizeof(char));
-				std::memcpy(part.text, contents.text.c_str(), part.n_text);
+				part.text = (char*) std::calloc(part.n_text + 1, sizeof(char));
+				memcpy(part.text, contents.text.c_str(), part.n_text);
 			}
 			else {
 				part.text = nullptr;
@@ -432,7 +434,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 			part.n_type = contents.type.size();
 			if (part.n_type > 0) {
 				part.type = (char*)std::calloc(part.n_type + 1, sizeof(char));
-				std::memcpy(part.type, contents.text.c_str(), part.n_type);
+				memcpy(part.type, contents.text.c_str(), part.n_type);
 			}
 			else {
 				part.type = nullptr;
@@ -455,7 +457,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 			toolcall.n_name = tool_call.name.size();
 			if (toolcall.n_name > 0) {
 				toolcall.name = (char*)std::calloc(toolcall.n_name + 1, sizeof(char));
-				std::memcpy(toolcall.name, tool_call.name.c_str(), toolcall.n_name);
+				memcpy(toolcall.name, tool_call.name.c_str(), toolcall.n_name);
 			}
 			else {
 				toolcall.name = nullptr;
@@ -463,8 +465,8 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 
 			toolcall.n_id = tool_call.id.size();
 			if (toolcall.n_id > 0) {
-				toolcall.id = (char*)std::calloc(toolcall.n_id + 1, sizeof(char));
-				std::memcpy(toolcall.id, tool_call.id.c_str(), toolcall.n_id);
+				toolcall.id = (char*) std::calloc(toolcall.n_id + 1, sizeof(char));
+				memcpy(toolcall.id, tool_call.id.c_str(), toolcall.n_id);
 			}
 			else {
 				toolcall.id = nullptr;
@@ -473,7 +475,7 @@ lcpp_common_chat_msg_t _to_lcpp_common_chat_msg(std::string& response, common_ch
 			toolcall.n_arguments = tool_call.arguments.size();
 			if (toolcall.n_arguments > 0) {
 				toolcall.arguments = (char*)std::calloc(toolcall.n_arguments + 1, sizeof(char));
-				std::memcpy(toolcall.arguments, tool_call.arguments.c_str(), toolcall.n_arguments);
+				memcpy(toolcall.arguments, tool_call.arguments.c_str(), toolcall.n_arguments);
 			}
 			else {
 				toolcall.arguments = nullptr;
@@ -567,7 +569,8 @@ int _prompt(void* args) {
 		}
 
 		if (ChatMessageCallback != nullptr && !response.empty()) {
-			auto _response = lcpp_common_chat_msg_ptr(&_to_lcpp_common_chat_msg(response, (common_chat_format)_chat_format.load()));
+			auto chat_msg = _to_lcpp_common_chat_msg(response, (common_chat_format)_chat_format.load());
+			auto _response = lcpp_common_chat_msg_ptr(&chat_msg);
 			ChatMessageCallback(*_response.get());
 		}
 
@@ -764,7 +767,8 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
 
 	params.cpuparams = _cpu;
 	
-	_result = common_init_result_ptr(&common_init_from_params(params));
+	auto iparams = common_init_from_params(params);
+	_result = common_init_result_ptr(&iparams);
 
 	auto model = _result->model.get();
 
