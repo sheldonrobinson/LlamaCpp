@@ -23,7 +23,7 @@ part of 'package:llamacpp/llamacpp.dart';
 /// - `llama_model_params toNative()`: Converts the instance to native parameters.
 /// - `Map<String, dynamic> toMap()`: Converts the instance to a map.
 /// - `String toJson()`: Converts the instance to a JSON string.
-class ModelParams extends ChangeNotifier {
+class ModelParams with ChangeNotifier {
   bool? _vocabOnly;
 
   /// Indicates whether only the vocabulary should be loaded.

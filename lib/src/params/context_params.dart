@@ -1,8 +1,9 @@
 // ignore_for_file: constant_identifier_names
 part of 'package:llamacpp/llamacpp.dart';
 
+
 /// A class representing the parameters for context configuration.
-class ContextParams extends ChangeNotifier {
+class ContextParams with ChangeNotifier {
   int _nCtx;
 
   /// text context, 0 = from model

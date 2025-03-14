@@ -7217,6 +7217,11 @@ external int lcpp_prompt(
   int n_messages,
 );
 
+@ffi.Native<ffi.Void Function(ffi.Pointer<lcpp_common_chat_msg_t>)>()
+external void lcpp_common_chat_msg_free(
+  ffi.Pointer<lcpp_common_chat_msg_t> msg,
+);
+
 @ffi.Native<lcpp_params_t Function()>()
 external lcpp_params_t lcpp_sampling_params_defaults();
 
@@ -7229,17 +7234,17 @@ external void lcpp_reconfigure(
   lcpp_params_t lcpp_params,
 );
 
-@ffi.Native<ffi.Void Function(LppTokenStreamCallback_t)>()
+@ffi.Native<ffi.Void Function(LppTokenStreamCallback)>()
 external void lcpp_set_token_stream_callback(
-  LppTokenStreamCallback_t newtoken_callback,
+  LppTokenStreamCallback newtoken_callback,
 );
 
 @ffi.Native<ffi.Void Function()>()
 external void lcpp_unset_token_stream_callback();
 
-@ffi.Native<ffi.Void Function(LppChatMessageCallback_t)>()
+@ffi.Native<ffi.Void Function(LppChatMessageCallback)>()
 external void lcpp_set_chat_message_callback(
-  LppChatMessageCallback_t chat_msg_callback,
+  LppChatMessageCallback chat_msg_callback,
 );
 
 @ffi.Native<ffi.Void Function()>()
@@ -7257,13 +7262,12 @@ external int lcpp_tokenize(
 );
 
 @ffi.Native<
-    ffi.Void Function(ffi.Pointer<ffi.Int>, ffi.Int, ffi.Bool, ffi.Bool,
+    ffi.Void Function(ffi.Pointer<ffi.Int>, ffi.Int, ffi.Bool,
         ffi.Pointer<lcpp_data_pvalue_t>)>()
 external void lcpp_detokenize(
   ffi.Pointer<ffi.Int> tokens,
   int n_tokens,
-  bool remove_special,
-  bool unparse_special,
+  bool special,
   ffi.Pointer<lcpp_data_pvalue_t> text,
 );
 
@@ -7284,6 +7288,12 @@ external void lcpp_send_abort_signal(
 
 @ffi.Native<ffi.Void Function()>()
 external void lcpp_reset();
+
+@ffi.Native<ffi.Void Function()>()
+external void lcpp_clear_token_stream_responses();
+
+@ffi.Native<ffi.Void Function()>()
+external void lcpp_clear_chat_msg_strings();
 
 @ffi.Native<ffi.Void Function()>()
 external void lcpp_destroy();
@@ -9506,10 +9516,14 @@ final class llama_perf_sampler_data extends ffi.Struct {
   external int n_sample;
 }
 
+final class common_chat_msg extends ffi.Opaque {}
+
+typedef common_chat_msg_t = common_chat_msg;
+
 final class lcpp_data_pvalue extends ffi.Struct {
   external ffi.Pointer<ffi.Char> value;
 
-  @ffi.Uint32()
+  @ffi.Int32()
   external int length;
 
   @ffi.Bool()
@@ -9830,18 +9844,18 @@ final class lcpp_common_chat_msg extends ffi.Struct {
 typedef lcpp_common_chat_msg_t = lcpp_common_chat_msg;
 typedef llama_model_params_t = llama_model_params;
 typedef llama_context_params_t = llama_context_params;
-typedef LppTokenStreamCallback_tFunction = ffi.Void Function(
-    ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Uint32>);
-typedef DartLppTokenStreamCallback_tFunction = void Function(
-    ffi.Pointer<ffi.Char>, ffi.Pointer<ffi.Uint32>);
-typedef LppTokenStreamCallback_t
-    = ffi.Pointer<ffi.NativeFunction<LppTokenStreamCallback_tFunction>>;
-typedef LppChatMessageCallback_tFunction = ffi.Void Function(
-    lcpp_common_chat_msg_t);
-typedef DartLppChatMessageCallback_tFunction = void Function(
-    lcpp_common_chat_msg_t);
-typedef LppChatMessageCallback_t
-    = ffi.Pointer<ffi.NativeFunction<LppChatMessageCallback_tFunction>>;
+typedef LppTokenStreamCallbackFunction = ffi.Void Function(
+    ffi.Pointer<ffi.Char>, ffi.Int);
+typedef DartLppTokenStreamCallbackFunction = void Function(
+    ffi.Pointer<ffi.Char>, int);
+typedef LppTokenStreamCallback
+    = ffi.Pointer<ffi.NativeFunction<LppTokenStreamCallbackFunction>>;
+typedef LppChatMessageCallbackFunction = ffi.Void Function(
+    ffi.Pointer<lcpp_common_chat_msg_t>);
+typedef DartLppChatMessageCallbackFunction = void Function(
+    ffi.Pointer<lcpp_common_chat_msg_t>);
+typedef LppChatMessageCallback
+    = ffi.Pointer<ffi.NativeFunction<LppChatMessageCallbackFunction>>;
 
 const int _VCRT_COMPILER_PREPROCESSOR = 1;
 

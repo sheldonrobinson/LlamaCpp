@@ -24,8 +24,8 @@ allprojects {
 }
 
 plugins {
-    id("com.android.library") version "8.7.0" apply false
-	id("org.jetbrains.kotlin.android") version "1.9.25" apply false
+    id("com.android.library")
+	id("org.jetbrains.kotlin.android")
 }
 
 android {
@@ -33,13 +33,13 @@ android {
 
     // Bumping the plugin compileSdk version requires all clients of this plugin
     // to bump the version in their app.
-    compileSdk = 33
+    compileSdk = 32
 
     // Use the NDK version
     // declared in /android/app/build.gradle file of the Flutter project.
     // Replace it with a version number if this plugin requires a specific NDK version.
     // (e.g. ndkVersion "23.1.7779620")
-    ndkVersion = "25.1.8937393"
+    ndkVersion = "27.0.12077973"
 
     // Invoke the shared CMake build with the Android Gradle Plugin.
     externalNativeBuild {

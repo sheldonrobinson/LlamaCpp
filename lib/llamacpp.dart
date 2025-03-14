@@ -9,7 +9,6 @@ import 'dart:io';
 
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:flutter/foundation.dart';
-import 'package:langchain_core/chat_models.dart';
 import 'package:path/path.dart' as p;
 import 'package:langchain_core/prompts.dart';
 import 'package:langchain_core/chat_models.dart' as cm;

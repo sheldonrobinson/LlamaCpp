@@ -7,3 +7,6 @@
 [submodule "src/Vulkan-Headers"]
 	path = src/Vulkan-Headers
 	url = https://github.com/KhronosGroup/Vulkan-Headers.git
+[submodule "src/cpuinfo"]
+	path = src/cpuinfo
+	url = https://github.com/pytorch/cpuinfo.git

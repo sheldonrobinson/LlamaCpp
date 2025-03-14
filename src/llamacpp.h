@@ -2,18 +2,18 @@
 #define _LLAMACPP_H
 
 #ifdef __cplusplus
-	#ifdef WIN32
-		#define FFI_PLUGIN_EXPORT extern "C" __declspec(dllexport)
-	#else
-		#define FFI_PLUGIN_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
-	#endif // WIN32
-	#include <cstdint>
-	#include <cstdbool>
-	
+#ifdef WIN32
+#define FFI_PLUGIN_EXPORT extern "C" __declspec(dllexport)
+#else
+#define FFI_PLUGIN_EXPORT extern "C" __attribute__((visibility("default"))) __attribute__((used))
+#endif // WIN32
+#include <cstdint>
+#include <cstdbool>
+
 #else // __cplusplus - Objective-C or other C platform
-	#define FFI_PLUGIN_EXPORT extern
-	#include <stdint.h>
-	#include <stdbool.h>
+#define FFI_PLUGIN_EXPORT extern
+#include <stdint.h>
+#include <stdbool.h>
 #endif
 
 #include "llama.h"
@@ -26,7 +26,7 @@ extern "C" {
 
 	typedef struct lcpp_data_pvalue {
 		char* value;
-		uint32_t length;
+		int32_t length;
 		bool found;
 
 	} lcpp_data_pvalue_t;
@@ -102,7 +102,7 @@ extern "C" {
 
 		lcpp_mirostat_type_t mirostat;     // 0 = disabled, 1 = mirostat, 2 = mirostat 2.0
 		lcpp_model_family_t model_family; // model family e.g. deepseek phi
-		 
+
 		bool    ignore_eos;
 		bool    no_perf; // disable performance metrics
 		bool    timing_per_token;
@@ -121,14 +121,14 @@ extern "C" {
 		uint32_t n_name;
 		uint32_t n_arguments;
 		uint32_t n_id;
-	} lcpp_common_chat_tool_call_t;
+	} lcpp_common_chat_tool_call_t, *plcpp_common_chat_tool_call_t;
 
 	typedef struct lcpp_common_chat_msg_content_part {
 		char* type;
 		char* text;
 		uint32_t n_type;
 		uint32_t n_text;
-	} lcpp_common_chat_msg_content_part_t;
+	} lcpp_common_chat_msg_content_part_t, *plcpp_common_chat_msg_content_part_t;
 
 	typedef struct lcpp_common_chat_msg {
 		char* role;
@@ -151,9 +151,9 @@ extern "C" {
 
 	typedef struct llama_context_params llama_context_params_t;
 
-	typedef void (*LppTokenStreamCallback_t)(const char*, uint32_t* length);
+	typedef void (*LppTokenStreamCallback)(const char*, int);
 
-	typedef void (*LppChatMessageCallback_t)(const lcpp_common_chat_msg_t);
+	typedef void (*LppChatMessageCallback)(lcpp_common_chat_msg_t*);
 
 #ifdef __cplusplus
 }
@@ -161,23 +161,24 @@ extern "C" {
 
 FFI_PLUGIN_EXPORT int lcpp_prompt(lcpp_common_chat_msg_t** messages, int n_messages);
 
+FFI_PLUGIN_EXPORT void lcpp_common_chat_msg_free(lcpp_common_chat_msg_t* msg);
+
 FFI_PLUGIN_EXPORT lcpp_params_t lcpp_sampling_params_defaults();
 
 FFI_PLUGIN_EXPORT void lcpp_reconfigure(const llama_model_params_t model_params, const llama_context_params_t context_params, const lcpp_params_t lcpp_params);
 
-FFI_PLUGIN_EXPORT void lcpp_set_token_stream_callback(LppTokenStreamCallback_t newtoken_callback);
+FFI_PLUGIN_EXPORT void lcpp_set_token_stream_callback(LppTokenStreamCallback newtoken_callback);
 
 FFI_PLUGIN_EXPORT void lcpp_unset_token_stream_callback();
 
-FFI_PLUGIN_EXPORT void lcpp_set_chat_message_callback(LppChatMessageCallback_t chat_msg_callback);
+FFI_PLUGIN_EXPORT void lcpp_set_chat_message_callback(LppChatMessageCallback chat_msg_callback);
 
 FFI_PLUGIN_EXPORT void lcpp_unset_chat_message_callback();
 
 FFI_PLUGIN_EXPORT int32_t lcpp_tokenize(const char* text, int n_text, bool add_special,
 	bool parse_special, llama_token** tokens);
 
-FFI_PLUGIN_EXPORT void lcpp_detokenize(int* tokens, int n_tokens, bool remove_special, bool   unparse_special,
-	lcpp_data_pvalue_t* text);
+FFI_PLUGIN_EXPORT void lcpp_detokenize(int* tokens, int n_tokens, bool special, lcpp_data_pvalue_t* text);
 
 FFI_PLUGIN_EXPORT void lcpp_model_description(lcpp_data_pvalue_t* pvalue);
 
@@ -186,6 +187,10 @@ FFI_PLUGIN_EXPORT void lcpp_model_architecture(lcpp_data_pvalue_t* pvalue);
 FFI_PLUGIN_EXPORT void lcpp_send_abort_signal(bool abort);
 
 FFI_PLUGIN_EXPORT void lcpp_reset();
+
+FFI_PLUGIN_EXPORT void lcpp_clear_token_stream_responses();
+
+FFI_PLUGIN_EXPORT void lcpp_clear_chat_msg_strings();
 
 FFI_PLUGIN_EXPORT void lcpp_destroy();
 
