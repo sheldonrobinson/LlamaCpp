@@ -19,6 +19,9 @@ set(LLAMA_BUILD_COMMON ON CACHE BOOL "llama: build common utils library" FORCE)
 
 set(GGML_OPENMP ON CACHE BOOL "ggml: use OpenMP" FORCE)
 set(GGML_VULKAN ON CACHE BOOL "llama: enable vulkan" FORCE)
+set(Vulkan_GLSLC_EXECUTABLE "glslc" CACHE STRING "File path or command to run glslc" FORCE)
+set(_ggml_vk_genshaders_cmd "vulkan-shaders-gen" CACHE STRING "File path or command to run vulkan-shaders-gen" FORCE)
+set(CMAKE_MAKE_PROGRAM ninja)
 
 ################## cpuinfo settings ###############################
 set(CPUINFO_LOG_LEVEL "fatal" CACHE STRING "Minimum logging level (info with lower severity will be ignored)" FORCE)

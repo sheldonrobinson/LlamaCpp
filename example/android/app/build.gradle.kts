@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "com.example.llamacpp_example"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = android.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -99,7 +99,6 @@ typedef struct common_init_result_deleter {
 
 typedef std::unique_ptr<common_init_result_t, common_init_result_deleter_t> common_init_result_ptr;
 
-// static common_init_result_ptr _result;
 
 static llama_model_ptr _model;
 
@@ -847,20 +846,9 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
     ctxparams.abort_callback = _ggml_abort_callback;
     ctxparams.abort_callback_data = nullptr;
 
-    // auto iparams = common_init_from_params(params);
-
-
-    // auto init_result = common_init_result_ptr(&iparams);
-    // auto llama_model = ;
     _model = llama_model_ptr(llama_model_load_from_file(params.model.c_str(), mparams));
-    // auto llama_context = ;
     _ctx = llama_context_ptr(llama_init_from_model(_model.get(), ctxparams));
 
-    // _model = llama_model_ptr(init_result.get()->model.release());
-
-    // _ctx = llama_context_ptr(init_result.get()->context.release());
-
-    // auto model = _result->model.get();
 
     _chat_templates = common_chat_templates_init(_model.get(), params.chat_template);
 
@@ -870,7 +858,6 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
     if (!params.system_prompt.empty()) {
         _system_prompt = std::string(params.system_prompt.c_str());
     }
-
 
     _set_use_jinja_by_model_family(lcpp_params.model_family);
 

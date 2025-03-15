@@ -5785,6 +5785,11 @@ external ffi.Pointer<llama_model> llama_get_model(
   ffi.Pointer<llama_context> ctx,
 );
 
+@ffi.Native<ffi.Pointer<llama_kv_cache> Function(ffi.Pointer<llama_context>)>()
+external ffi.Pointer<llama_kv_cache> llama_get_kv_self(
+  ffi.Pointer<llama_context> ctx,
+);
+
 @ffi.Native<ffi.Int Function(ffi.Pointer<llama_context>)>(
     symbol: 'llama_pooling_type')
 external int _llama_pooling_type$1(
@@ -6059,11 +6064,21 @@ external void llama_kv_cache_view_update(
 /// Returns the number of tokens in the KV cache (slow, use only for debug)
 /// If a KV cell has multiple sequences assigned to it, it will be counted multiple times
 @ffi.Native<ffi.Int32 Function(ffi.Pointer<llama_context>)>()
+external int llama_kv_self_n_tokens(
+  ffi.Pointer<llama_context> ctx,
+);
+
+@ffi.Native<ffi.Int32 Function(ffi.Pointer<llama_context>)>()
 external int llama_get_kv_cache_token_count(
   ffi.Pointer<llama_context> ctx,
 );
 
 /// Returns the number of used KV cells (i.e. have at least one sequence assigned to them)
+@ffi.Native<ffi.Int32 Function(ffi.Pointer<llama_context>)>()
+external int llama_kv_self_used_cells(
+  ffi.Pointer<llama_context> ctx,
+);
+
 @ffi.Native<ffi.Int32 Function(ffi.Pointer<llama_context>)>()
 external int llama_get_kv_cache_used_cells(
   ffi.Pointer<llama_context> ctx,
@@ -6071,7 +6086,7 @@ external int llama_get_kv_cache_used_cells(
 
 /// Clear the KV cache - both cell info is erased and KV data is zeroed
 @ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
-external void llama_kv_cache_clear(
+external void llama_kv_self_clear(
   ffi.Pointer<llama_context> ctx,
 );
 
@@ -6083,7 +6098,7 @@ external void llama_kv_cache_clear(
 @ffi.Native<
     ffi.Bool Function(
         ffi.Pointer<llama_context>, llama_seq_id, llama_pos, llama_pos)>()
-external bool llama_kv_cache_seq_rm(
+external bool llama_kv_self_seq_rm(
   ffi.Pointer<llama_context> ctx,
   int seq_id,
   int p0,
@@ -6097,7 +6112,7 @@ external bool llama_kv_cache_seq_rm(
 @ffi.Native<
     ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id, llama_seq_id,
         llama_pos, llama_pos)>()
-external void llama_kv_cache_seq_cp(
+external void llama_kv_self_seq_cp(
   ffi.Pointer<llama_context> ctx,
   int seq_id_src,
   int seq_id_dst,
@@ -6107,7 +6122,7 @@ external void llama_kv_cache_seq_cp(
 
 /// Removes all tokens that do not belong to the specified sequence
 @ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id)>()
-external void llama_kv_cache_seq_keep(
+external void llama_kv_self_seq_keep(
   ffi.Pointer<llama_context> ctx,
   int seq_id,
 );
@@ -6115,9 +6130,97 @@ external void llama_kv_cache_seq_keep(
 /// Adds relative position "delta" to all tokens that belong to the specified sequence and have positions in [p0, p1)
 /// If the KV cache is RoPEd, the KV data is updated accordingly:
 /// - lazily on next llama_decode()
-/// - explicitly with llama_kv_cache_update()
+/// - explicitly with llama_kv_self_update()
 /// p0 < 0 : [0,  p1]
 /// p1 < 0 : [p0, inf)
+@ffi.Native<
+    ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id, llama_pos,
+        llama_pos, llama_pos)>()
+external void llama_kv_self_seq_add(
+  ffi.Pointer<llama_context> ctx,
+  int seq_id,
+  int p0,
+  int p1,
+  int delta,
+);
+
+/// Integer division of the positions by factor of `d > 1`
+/// If the KV cache is RoPEd, the KV data is updated accordingly:
+/// - lazily on next llama_decode()
+/// - explicitly with llama_kv_self_update()
+/// p0 < 0 : [0,  p1]
+/// p1 < 0 : [p0, inf)
+@ffi.Native<
+    ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id, llama_pos,
+        llama_pos, ffi.Int)>()
+external void llama_kv_self_seq_div(
+  ffi.Pointer<llama_context> ctx,
+  int seq_id,
+  int p0,
+  int p1,
+  int d,
+);
+
+/// Returns the largest position present in the KV cache for the specified sequence
+@ffi.Native<llama_pos Function(ffi.Pointer<llama_context>, llama_seq_id)>()
+external int llama_kv_self_seq_pos_max(
+  ffi.Pointer<llama_context> ctx,
+  int seq_id,
+);
+
+/// Defragment the KV cache
+/// This will be applied:
+/// - lazily on next llama_decode()
+/// - explicitly with llama_kv_self_update()
+@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
+external void llama_kv_self_defrag(
+  ffi.Pointer<llama_context> ctx,
+);
+
+/// Check if the context supports KV cache shifting
+@ffi.Native<ffi.Bool Function(ffi.Pointer<llama_context>)>()
+external bool llama_kv_self_can_shift(
+  ffi.Pointer<llama_context> ctx,
+);
+
+/// Apply the KV cache updates (such as K-shifts, defragmentation, etc.)
+@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
+external void llama_kv_self_update(
+  ffi.Pointer<llama_context> ctx,
+);
+
+@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
+external void llama_kv_cache_clear(
+  ffi.Pointer<llama_context> ctx,
+);
+
+@ffi.Native<
+    ffi.Bool Function(
+        ffi.Pointer<llama_context>, llama_seq_id, llama_pos, llama_pos)>()
+external bool llama_kv_cache_seq_rm(
+  ffi.Pointer<llama_context> ctx,
+  int seq_id,
+  int p0,
+  int p1,
+);
+
+@ffi.Native<
+    ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id, llama_seq_id,
+        llama_pos, llama_pos)>()
+external void llama_kv_cache_seq_cp(
+  ffi.Pointer<llama_context> ctx,
+  int seq_id_src,
+  int seq_id_dst,
+  int p0,
+  int p1,
+);
+
+@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id)>()
+external void llama_kv_cache_seq_keep(
+  ffi.Pointer<llama_context> ctx,
+  int seq_id,
+);
+
 @ffi.Native<
     ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id, llama_pos,
         llama_pos, llama_pos)>()
@@ -6129,12 +6232,6 @@ external void llama_kv_cache_seq_add(
   int delta,
 );
 
-/// Integer division of the positions by factor of `d > 1`
-/// If the KV cache is RoPEd, the KV data is updated accordingly:
-/// - lazily on next llama_decode()
-/// - explicitly with llama_kv_cache_update()
-/// p0 < 0 : [0,  p1]
-/// p1 < 0 : [p0, inf)
 @ffi.Native<
     ffi.Void Function(ffi.Pointer<llama_context>, llama_seq_id, llama_pos,
         llama_pos, ffi.Int)>()
@@ -6146,31 +6243,24 @@ external void llama_kv_cache_seq_div(
   int d,
 );
 
-/// Returns the largest position present in the KV cache for the specified sequence
 @ffi.Native<llama_pos Function(ffi.Pointer<llama_context>, llama_seq_id)>()
 external int llama_kv_cache_seq_pos_max(
   ffi.Pointer<llama_context> ctx,
   int seq_id,
 );
 
-/// Defragment the KV cache
-/// This will be applied:
-/// - lazily on next llama_decode()
-/// - explicitly with llama_kv_cache_update()
 @ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
 external void llama_kv_cache_defrag(
   ffi.Pointer<llama_context> ctx,
 );
 
-/// Apply the KV cache updates (such as K-shifts, defragmentation, etc.)
-@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
-external void llama_kv_cache_update(
+@ffi.Native<ffi.Bool Function(ffi.Pointer<llama_context>)>()
+external bool llama_kv_cache_can_shift(
   ffi.Pointer<llama_context> ctx,
 );
 
-/// Check if the context supports KV cache shifting
-@ffi.Native<ffi.Bool Function(ffi.Pointer<llama_context>)>()
-external bool llama_kv_cache_can_shift(
+@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>)>()
+external void llama_kv_cache_update(
   ffi.Pointer<llama_context> ctx,
 );
 
@@ -6415,6 +6505,14 @@ external void llama_set_embeddings(
 external void llama_set_causal_attn(
   ffi.Pointer<llama_context> ctx,
   bool causal_attn,
+);
+
+/// Set whether the model is in warmup mode or not
+/// If true, all model tensors are activated during llama_decode() to load and cache their weights.
+@ffi.Native<ffi.Void Function(ffi.Pointer<llama_context>, ffi.Bool)>()
+external void llama_set_warmup(
+  ffi.Pointer<llama_context> ctx,
+  bool warmup,
 );
 
 /// Set abort callback
@@ -8682,6 +8780,8 @@ final class llama_sampler extends ffi.Struct {
   external llama_sampler_context_t ctx;
 }
 
+final class llama_kv_cache extends ffi.Opaque {}
+
 typedef llama_pos = ffi.Int32;
 typedef Dartllama_pos = int;
 typedef llama_seq_id = ffi.Int32;
@@ -9788,6 +9888,7 @@ final class lcpp_common_chat_tool_call extends ffi.Struct {
 }
 
 typedef lcpp_common_chat_tool_call_t = lcpp_common_chat_tool_call;
+typedef plcpp_common_chat_tool_call_t = ffi.Pointer<lcpp_common_chat_tool_call>;
 
 final class lcpp_common_chat_msg_content_part extends ffi.Struct {
   external ffi.Pointer<ffi.Char> type;
@@ -9802,6 +9903,8 @@ final class lcpp_common_chat_msg_content_part extends ffi.Struct {
 }
 
 typedef lcpp_common_chat_msg_content_part_t = lcpp_common_chat_msg_content_part;
+typedef plcpp_common_chat_msg_content_part_t
+    = ffi.Pointer<lcpp_common_chat_msg_content_part>;
 
 final class lcpp_common_chat_msg extends ffi.Struct {
   external ffi.Pointer<ffi.Char> role;

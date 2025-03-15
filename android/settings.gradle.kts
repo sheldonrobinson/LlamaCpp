@@ -1,1 +1,1 @@
-rootProject.name = 'llamacpp'
+rootProject.name = "llamacpp"
