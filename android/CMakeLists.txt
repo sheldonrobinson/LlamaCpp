@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.22)
 set(PROJECT_NAME "llamacpp")
 project(${PROJECT_NAME} LANGUAGES CXX C)
 
+
+find_package(Vulkan REQUIRED)
 set(LLAMACPP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
 # Set CMake flags
@@ -17,9 +19,6 @@ set(LLAMA_BUILD_COMMON ON CACHE BOOL "llama: build common utils library" FORCE)
 
 set(GGML_OPENMP ON CACHE BOOL "ggml: use OpenMP" FORCE)
 set(GGML_VULKAN ON CACHE BOOL "llama: enable vulkan" FORCE)
-set(Vulkan_GLSLC_EXECUTABLE "glslc" CACHE FILEPATH "Path to Vulkan glslc executable" FORCE)
-# set(GGML_VULKAN_SHADERS_GEN_TOOLCHAIN "vulkan-shaders-gen" CACHE FILEPATH "ggml: toolchain file for vulkan-shaders-gen" FORCE)
-set(CMAKE_CROSSCOMPILING ON)
 
 ################## cpuinfo settings ###############################
 set(CPUINFO_LOG_LEVEL "fatal" CACHE STRING "Minimum logging level (info with lower severity will be ignored)" FORCE)

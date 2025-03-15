@@ -8,11 +8,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_subdirectory(Vulkan-Headers "${CMAKE_CURRENT_BINARY_DIR}/vkheaders" EXCLUDE_FROM_ALL)
 
 if(GGML_VULKAN)
-  add_subdirectory(Vulkan-Headers "${CMAKE_CURRENT_BINARY_DIR}/vkheaders" EXCLUDE_FROM_ALL)
-  if(NOT ANDROID)
+  if(WIN32)
 	  add_subdirectory(Vulkan-Loader "${CMAKE_CURRENT_BINARY_DIR}/vkloaders" EXCLUDE_FROM_ALL)
+  else()
+      find_package(Vulkan REQUIRED)
   endif()
 endif()
 
@@ -21,6 +23,8 @@ add_subdirectory(cpuinfo "${CMAKE_CURRENT_BINARY_DIR}/cpuinfo" EXCLUDE_FROM_ALL)
 add_subdirectory(llama_cpp "${CMAKE_CURRENT_BINARY_DIR}/llama" EXCLUDE_FROM_ALL)
 
 add_library(llamacpp SHARED "llamacpp.cpp")
+
+target_include_directories(ggml-vulkan PRIVATE Vulkan-Headers/include )
 
 target_include_directories(llamacpp PRIVATE llama_cpp/include llama_cpp/ggml/include llama_cpp/common/include cpuinfo/include)
 
@@ -34,17 +38,6 @@ set_target_properties(llamacpp PROPERTIES
 target_compile_definitions(llamacpp PUBLIC DART_SHARED_LIB)
 
 target_link_libraries(llamacpp PRIVATE cpuinfo ggml llama common Threads::Threads)
-
-# if(WIN32)
-  # target_link_directories(lcpp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llama_cpp/binaries/windows/x64/lib")
-  # target_link_libraries(lcpp PRIVATE ggml common llguidance Threads::Threads)
-# elseif(ANDROID)
-  # target_link_directories(lcpp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llama_cpp/binaries/android/arm64-v8a")
-  # target_link_libraries(lcpp PRIVATE ggml Threads::Threads)
-# elseif(Linux)
-  # target_link_directories(lcpp PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/llama_cpp/binaries/linux/x64/lib")
-  # target_link_libraries(lcpp PRIVATE ggml Threads::Threads)
-# endif()
 
 if (ANDROID)
   # Support Android 15 16k page size.

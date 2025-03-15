@@ -4,7 +4,7 @@
 #include <queue>
 #include <atomic>
 #include <string>
-
+#include <memory>
 #include <thread>
 #include <cpuinfo.h>
 
@@ -564,7 +564,7 @@ lcpp_common_chat_msg_t* _to_lcpp_common_chat_msg(std::string& response, common_c
 int _prompt(lcpp_prompt_args_t prompt_args) {
     // lcpp_prompt_args_t* prompt_args = (lcpp_prompt_args_t*)args;
     // int n_messages = prompt_args.n_messages;
-    if (!prompt_args.messages.size() > 0) {
+    if (!(prompt_args.messages.size() > 0)) {
         return GGML_EXIT_ABORTED;
     }
     std::vector<common_chat_msg_t> chat_msgs;
@@ -580,7 +580,7 @@ int _prompt(lcpp_prompt_args_t prompt_args) {
     auto generate = [&](const std::string& prompt) {
         std::string response;
 
-        const bool is_first = llama_get_kv_cache_used_cells(prompt_args.context) == 0;
+        const bool is_first = llama_kv_self_used_cells(prompt_args.context) == 0;
 
         // tokenize the prompt
         auto prompt_tokens = common_tokenize(prompt_args.context, prompt, is_first, true);
@@ -592,7 +592,7 @@ int _prompt(lcpp_prompt_args_t prompt_args) {
         while (true) {
             // check if we have enough space in the context to evaluate this batch
             int n_ctx = llama_n_ctx(prompt_args.context);
-            int n_ctx_used = llama_get_kv_cache_used_cells(prompt_args.context);
+            int n_ctx_used = llama_kv_self_used_cells(prompt_args.context);
             if (n_ctx_used + batch.n_tokens > n_ctx) {
                 fprintf(stderr, "context size exceeded\n");
                 return GGML_EXIT_ABORTED;
@@ -817,6 +817,8 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
 
     llama_backend_init();
     auto params = _lcpp_params_to_common_params(&model_params, &context_params, &lcpp_params);
+    auto mparams = common_model_params_to_llama(params);
+    auto ctxparams = common_context_params_to_llama(params);
     postprocess_cpu_params(params.cpuparams, nullptr);
 
     if (cpuinfo_initialize()) {
@@ -838,14 +840,25 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
     }
     else {
         llama_numa_init(GGML_NUMA_STRATEGY_DISABLED);
-    }   
+    }
 
-    auto iparams = common_init_from_params(params);
-    auto init_result = common_init_result_ptr(&iparams);
+    auto thrdpoolparams = ggml_threadpool_params_from_cpu_params(params.cpuparams);
 
-    _model = llama_model_ptr(init_result.get()->model.release());
+    ctxparams.abort_callback = _ggml_abort_callback;
+    ctxparams.abort_callback_data = nullptr;
 
-    _ctx = llama_context_ptr(init_result.get()->context.release());
+    // auto iparams = common_init_from_params(params);
+
+
+    // auto init_result = common_init_result_ptr(&iparams);
+    // auto llama_model = ;
+    _model = llama_model_ptr(llama_model_load_from_file(params.model.c_str(), mparams));
+    // auto llama_context = ;
+    _ctx = llama_context_ptr(llama_init_from_model(_model.get(), ctxparams));
+
+    // _model = llama_model_ptr(init_result.get()->model.release());
+
+    // _ctx = llama_context_ptr(init_result.get()->context.release());
 
     // auto model = _result->model.get();
 
@@ -858,7 +871,6 @@ void lcpp_reconfigure(const llama_model_params_t model_params, const llama_conte
         _system_prompt = std::string(params.system_prompt.c_str());
     }
 
-    _ctx->abort_callback = _ggml_abort_callback;
 
     _set_use_jinja_by_model_family(lcpp_params.model_family);
 
@@ -926,7 +938,7 @@ void lcpp_destroy() {
 }
 
 void lcpp_reset() {
-    llama_kv_cache_clear(_ctx.get());
+	llama_kv_self_clear(_ctx.get());
 }
 
 void lcpp_clear_token_stream_responses() {
